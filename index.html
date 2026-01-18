@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Conversion Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { margin: 0; padding: 20px; background-color: #f0f4f8; font-family: 'Oswald', Arial, sans-serif; color: #000000; font-weight: 500; min-height: 100vh; }
+        
+        .page-container { width: 100%; max-width: 1200px; margin: 0 auto; }
+        
+        .page-header { background-color: #004080; color: #ffffff; padding: 25px 30px; text-align: center; margin-bottom: 15px; border-radius: 8px 8px 0 0; }
+        .logo-row { display: flex; justify-content: center; align-items: center; gap: 30px; margin-bottom: 15px; }
+        .logo-box { background: #ffffff; border-radius: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; }
+        .logo-box img { width: 80px; height: auto; border-radius: 6px; }
+        .page-header h3 { margin: 12px 0 5px; font-size: 14px; font-weight: 700; letter-spacing: 1px; }
+        .page-header .tagline { margin: 0; font-size: 10px; font-weight: 500; }
+        .page-header h1 { margin: 20px 0 10px; font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+        .page-header .subtitle { font-size: 14px; font-weight: 500; }
+        
+        .content-card { border: 4px double #004080; border-radius: 12px; padding: 12px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 15px; }
+        .content-inner { padding: 25px; }
+        
+        .section-header { background-color: #004080; color: #ffffff; padding: 15px 20px; margin-bottom: 20px; border-radius: 6px; display: flex; align-items: center; gap: 15px; }
+        .section-icon { background: #ffffff; color: #004080; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; flex-shrink: 0; }
+        .section-title { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; color: #004080; font-size: 14px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-input, .form-select { width: 100%; padding: 12px 15px; border: 2px solid #004080; border-radius: 6px; font-size: 14px; font-family: 'Oswald', Arial, sans-serif; font-weight: 500; color: #000; background: #ffffff; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #0056b3; box-shadow: 0 0 0 3px rgba(0, 64, 128, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .help-text { font-size: 12px; color: #666; margin-top: 5px; font-style: italic; }
+        
+        .btn-primary { padding: 14px 24px; background: #004080; color: #ffffff; border: 2px solid #004080; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-family: 'Oswald', Arial, sans-serif; transition: all 0.3s; }
+        .btn-primary:hover { background: #0056b3; border-color: #0056b3; }
+        .btn-primary:disabled { background: #6c757d; border-color: #6c757d; cursor: not-allowed; }
+        .btn-gold { padding: 14px 24px; background: #ffc107; color: #000000; border: 2px solid #ffc107; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-family: 'Oswald', Arial, sans-serif; transition: all 0.3s; }
+        .btn-gold:hover { background: #e0a800; border-color: #e0a800; }
+        .btn-gold:disabled { background: #ccc; color: #666; border-color: #ccc; cursor: not-allowed; }
+        .btn-success { padding: 14px 24px; background: #28a745; color: #ffffff; border: 2px solid #28a745; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-family: 'Oswald', Arial, sans-serif; transition: all 0.3s; }
+        .btn-success:hover { background: #218838; border-color: #218838; }
+        
+        .upload-zone { border: 3px dashed #004080; border-radius: 8px; padding: 40px; text-align: center; background: #f8f9fa; cursor: pointer; transition: all 0.3s; }
+        .upload-zone:hover { background: #e7f3ff; border-color: #0056b3; }
+        .upload-zone.dragover { background: #d4edda; border-color: #28a745; }
+        .upload-icon { font-size: 48px; margin-bottom: 15px; color: #004080; }
+        .upload-text { font-size: 16px; color: #004080; font-weight: 600; }
+        .upload-hint { font-size: 12px; color: #666; margin-top: 8px; }
+        
+        .file-info { background: #d4edda; border: 2px solid #28a745; border-radius: 6px; padding: 15px; margin-top: 15px; display: none; }
+        .file-info.show { display: block; }
+        .file-name { font-weight: 700; color: #155724; }
+        .file-details { font-size: 12px; color: #155724; margin-top: 5px; }
+        
+        .preview-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        .preview-table th { background: #004080; color: white; padding: 10px 8px; text-align: left; font-weight: 600; white-space: nowrap; }
+        .preview-table td { padding: 8px; border-bottom: 1px solid #ddd; white-space: nowrap; }
+        .preview-table tr:nth-child(even) { background: #f8f9fa; }
+        .preview-table tr:hover { background: #e7f3ff; }
+        .table-wrapper { overflow-x: auto; max-width: 100%; }
+        .new-col { background: #d4edda !important; }
+        
+        .result-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+        .stat-box { background: #f8f9fa; border: 2px solid #004080; border-radius: 8px; padding: 20px; text-align: center; }
+        .stat-box.success { border-color: #28a745; background: #d4edda; }
+        .stat-box.warning { border-color: #ffc107; background: #fff3cd; }
+        .stat-box.danger { border-color: #dc3545; background: #f8d7da; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #004080; }
+        .stat-box.success .stat-value { color: #155724; }
+        .stat-box.warning .stat-value { color: #856404; }
+        .stat-box.danger .stat-value { color: #721c24; }
+        .stat-label { font-size: 12px; color: #666; margin-top: 5px; text-transform: uppercase; }
+        
+        .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 8px; font-weight: 600; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .notification.success { background: #d4edda; color: #155724; border: 2px solid #28a745; display: block; }
+        .notification.error { background: #f8d7da; color: #721c24; border: 2px solid #dc3545; display: block; }
+        .notification.info { background: #e7f3ff; color: #004080; border: 2px solid #004080; display: block; }
+        
+        .page-footer { background-color: #004080; color: #ffffff; padding: 20px 30px; text-align: center; font-size: 13px; line-height: 1.7; font-weight: 500; border-radius: 0 0 8px 8px; }
+        .page-footer p { margin: 6px 0 0; font-size: 12px; }
+        
+        .hidden { display: none !important; }
+        
+        .info-box { background: #e7f3ff; border: 2px solid #004080; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+        .info-box h4 { color: #004080; font-size: 14px; margin-bottom: 10px; }
+        .info-box ul { margin-left: 20px; font-size: 13px; color: #333; }
+        .info-box li { margin: 5px 0; }
+        .info-box code { background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 12px; }
+        
+        .format-card { background: #f8f9fa; border: 2px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .format-card:hover { border-color: #004080; background: #e7f3ff; }
+        .format-card.selected { border-color: #28a745; background: #d4edda; }
+        .format-card h5 { color: #004080; font-size: 14px; margin-bottom: 5px; }
+        .format-card p { font-size: 12px; color: #666; margin: 0; }
+        .format-card .example { font-family: 'Courier New', monospace; background: #fff; padding: 4px 8px; border-radius: 4px; margin-top: 8px; font-size: 11px; display: inline-block; }
+        
+        .format-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+        
+        .sample-values { background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .sample-values h5 { color: #856404; font-size: 13px; margin-bottom: 10px; }
+        .sample-values .values { font-family: 'Courier New', monospace; font-size: 12px; color: #333; }
+        .sample-tag { display: inline-block; background: #fff; border: 1px solid #ffc107; border-radius: 3px; padding: 3px 8px; margin: 3px; font-size: 11px; }
+        
+        .converted-cell { background: #d4edda !important; font-weight: 600; }
+        .error-cell { background: #f8d7da !important; color: #721c24; }
+        
+        .button-group { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        
+        .radio-group { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; }
+        .radio-option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .radio-option input { accent-color: #004080; width: 18px; height: 18px; }
+        .radio-option label { font-size: 14px; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            .form-row, .form-row-3, .result-stats, .format-grid { grid-template-columns: 1fr; }
+            .result-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <div class="logo-row">
+                <div class="logo-box">
+                    <img src="https://github.com/mohamedsillahkanu/gdp-dashboard-2/raw/6c7463b0d5c3be150aafae695a4bcbbd8aeb1499/ICF-SL.jpg" alt="ICF-SL Logo">
+                </div>
+            </div>
+            <h3>Informatics Consultancy Firm-Sierra Leone (ICF-SL)</h3>
+            <p class="tagline"><em>Driving Data-Driven Solutions for Health and Development</em></p>
+            <h1>COORDINATE CONVERSION</h1>
+            <p class="subtitle">Convert Any Coordinate Format to Decimal Degrees (Longitude/Latitude)</p>
+        </div>
+
+        <div id="notification" class="notification"></div>
+
+        <!-- Step 1: Upload -->
+        <div class="content-card">
+            <div class="content-inner">
+                <div class="section-header">
+                    <div class="section-icon">1</div>
+                    <div class="section-title">UPLOAD YOUR DATA FILE</div>
+                </div>
+                
+                <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">+</div>
+                    <div class="upload-text">Click to upload or drag & drop your file here</div>
+                    <div class="upload-hint">Supported formats: CSV, XLS, XLSX</div>
+                    <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleFileUpload(event)">
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-details" id="fileDetails"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Select Columns & Format -->
+        <div class="content-card hidden" id="step2">
+            <div class="content-inner">
+                <div class="section-header">
+                    <div class="section-icon">2</div>
+                    <div class="section-title">SELECT COLUMNS & INPUT FORMAT</div>
+                </div>
+                
+                <div class="info-box">
+                    <h4>Supported Input Formats:</h4>
+                    <ul>
+                        <li><strong>Decimal Degrees (DD):</strong> <code>8.484722</code> or <code>-13.228889</code></li>
+                        <li><strong>Degrees Minutes Seconds (DMS):</strong> <code>8°29'5"N</code> or <code>8 29 5 N</code></li>
+                        <li><strong>Degrees Decimal Minutes (DDM):</strong> <code>8°29.083'N</code> or <code>8 29.083 N</code></li>
+                        <li><strong>With Direction:</strong> <code>N 8.484722</code> or <code>8.484722 N</code></li>
+                    </ul>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Latitude Column</label>
+                        <select class="form-select" id="latColumn" onchange="showSampleValues()">
+                            <option value="">-- Select Latitude Column --</option>
+                        </select>
+                        <div class="sample-values hidden" id="latSamples">
+                            <h5>Sample Values:</h5>
+                            <div class="values" id="latSampleValues"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude Column</label>
+                        <select class="form-select" id="lonColumn" onchange="showSampleValues()">
+                            <option value="">-- Select Longitude Column --</option>
+                        </select>
+                        <div class="sample-values hidden" id="lonSamples">
+                            <h5>Sample Values:</h5>
+                            <div class="values" id="lonSampleValues"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Input Coordinate Format</label>
+                    <div class="format-grid">
+                        <div class="format-card selected" data-format="auto" onclick="selectFormat('auto')">
+                            <h5>Auto-Detect</h5>
+                            <p>Automatically detect the coordinate format</p>
+                            <div class="example">Recommended for mixed formats</div>
+                        </div>
+                        <div class="format-card" data-format="dd" onclick="selectFormat('dd')">
+                            <h5>Decimal Degrees (DD)</h5>
+                            <p>Standard decimal format</p>
+                            <div class="example">8.484722, -13.228889</div>
+                        </div>
+                        <div class="format-card" data-format="dms" onclick="selectFormat('dms')">
+                            <h5>Degrees Minutes Seconds (DMS)</h5>
+                            <p>Traditional DMS notation</p>
+                            <div class="example">8°29'5"N, 13°13'44"W</div>
+                        </div>
+                        <div class="format-card" data-format="ddm" onclick="selectFormat('ddm')">
+                            <h5>Degrees Decimal Minutes (DDM)</h5>
+                            <p>Degrees with decimal minutes</p>
+                            <div class="example">8°29.083'N, 13°13.733'W</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Output Column Names</label>
+                    <div class="form-row">
+                        <div>
+                            <input type="text" class="form-input" id="latOutputName" value="Latitude_DD" placeholder="Latitude output column name">
+                        </div>
+                        <div>
+                            <input type="text" class="form-input" id="lonOutputName" value="Longitude_DD" placeholder="Longitude output column name">
+                        </div>
+                    </div>
+                    <p class="help-text">Names for the new converted coordinate columns</p>
+                </div>
+                
+                <button class="btn-primary" onclick="convertCoordinates()">CONVERT COORDINATES</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Results -->
+        <div class="content-card hidden" id="step3">
+            <div class="content-inner">
+                <div class="section-header">
+                    <div class="section-icon">3</div>
+                    <div class="section-title">CONVERSION RESULTS</div>
+                </div>
+                
+                <div class="result-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Total Rows</div>
+                    </div>
+                    <div class="stat-box success">
+                        <div class="stat-value" id="statConverted">0</div>
+                        <div class="stat-label">Successfully Converted</div>
+                    </div>
+                    <div class="stat-box danger" id="statFailedBox">
+                        <div class="stat-value" id="statFailed">0</div>
+                        <div class="stat-label">Failed to Convert</div>
+                    </div>
+                    <div class="stat-box success">
+                        <div class="stat-value" id="statRate">0%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table class="preview-table" id="previewTable"></table>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn-gold" onclick="downloadResult('csv')">DOWNLOAD CSV</button>
+                    <button class="btn-primary" onclick="downloadResult('xlsx')">DOWNLOAD EXCEL</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer">
+            <strong>Coordinate Conversion Tool</strong> - Developed by ICF-SL
+            <p>Informatics Consultancy Firm-Sierra Leone | Data Quality Solutions for Health Systems</p>
+        </div>
+    </div>
+
+    <script>
+        let originalData = [];
+        let convertedData = [];
+        let headers = [];
+        let convertedHeaders = [];
+        let latColIdx = -1;
+        let lonColIdx = -1;
+        let selectedFormat = 'auto';
+        let uploadedFileName = '';
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+        uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) processFile(e.dataTransfer.files[0]);
+        });
+
+        function handleFileUpload(event) {
+            if (event.target.files.length) processFile(event.target.files[0]);
+        }
+
+        function processFile(file) {
+            uploadedFileName = file.name;
+            const ext = uploadedFileName.split('.').pop().toLowerCase();
+            
+            if (!['csv', 'xls', 'xlsx'].includes(ext)) {
+                showNotification('Please upload a CSV or Excel file', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let workbook;
+                    if (ext === 'csv') {
+                        workbook = XLSX.read(e.target.result, { type: 'string' });
+                    } else {
+                        workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                    }
+
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+                    if (jsonData.length < 2) {
+                        showNotification('File must have a header row and at least one data row', 'error');
+                        return;
+                    }
+
+                    headers = jsonData[0].map(h => String(h).trim());
+                    originalData = jsonData.slice(1).map(row => {
+                        while (row.length < headers.length) row.push('');
+                        return row.slice(0, headers.length);
+                    });
+
+                    document.getElementById('fileInfo').classList.add('show');
+                    document.getElementById('fileName').textContent = uploadedFileName;
+                    document.getElementById('fileDetails').textContent = `${originalData.length} rows x ${headers.length} columns`;
+
+                    populateSelectors();
+
+                    document.getElementById('step2').classList.remove('hidden');
+                    document.getElementById('step3').classList.add('hidden');
+
+                    showNotification('File loaded successfully!', 'success');
+                } catch (err) {
+                    showNotification('Error reading file: ' + err.message, 'error');
+                }
+            };
+
+            if (ext === 'csv') reader.readAsText(file);
+            else reader.readAsArrayBuffer(file);
+        }
+
+        function populateSelectors() {
+            const latSel = document.getElementById('latColumn');
+            const lonSel = document.getElementById('lonColumn');
+            
+            latSel.innerHTML = '<option value="">-- Select Latitude Column --</option>';
+            lonSel.innerHTML = '<option value="">-- Select Longitude Column --</option>';
+
+            headers.forEach((h, i) => {
+                latSel.innerHTML += `<option value="${i}">${h}</option>`;
+                lonSel.innerHTML += `<option value="${i}">${h}</option>`;
+                
+                const lower = h.toLowerCase();
+                if (lower.includes('lat') || lower === 'y') latSel.value = i;
+                if (lower.includes('lon') || lower.includes('lng') || lower === 'x') lonSel.value = i;
+            });
+            
+            showSampleValues();
+        }
+
+        function showSampleValues() {
+            const latIdx = parseInt(document.getElementById('latColumn').value);
+            const lonIdx = parseInt(document.getElementById('lonColumn').value);
+            
+            // Latitude samples
+            const latSamplesDiv = document.getElementById('latSamples');
+            const latValuesDiv = document.getElementById('latSampleValues');
+            if (!isNaN(latIdx) && latIdx >= 0) {
+                const samples = originalData.slice(0, 5).map(row => row[latIdx]).filter(v => v !== '');
+                if (samples.length > 0) {
+                    latValuesDiv.innerHTML = samples.map(v => `<span class="sample-tag">${v}</span>`).join('');
+                    latSamplesDiv.classList.remove('hidden');
+                } else {
+                    latSamplesDiv.classList.add('hidden');
+                }
+            } else {
+                latSamplesDiv.classList.add('hidden');
+            }
+            
+            // Longitude samples
+            const lonSamplesDiv = document.getElementById('lonSamples');
+            const lonValuesDiv = document.getElementById('lonSampleValues');
+            if (!isNaN(lonIdx) && lonIdx >= 0) {
+                const samples = originalData.slice(0, 5).map(row => row[lonIdx]).filter(v => v !== '');
+                if (samples.length > 0) {
+                    lonValuesDiv.innerHTML = samples.map(v => `<span class="sample-tag">${v}</span>`).join('');
+                    lonSamplesDiv.classList.remove('hidden');
+                } else {
+                    lonSamplesDiv.classList.add('hidden');
+                }
+            } else {
+                lonSamplesDiv.classList.add('hidden');
+            }
+        }
+
+        function selectFormat(format) {
+            selectedFormat = format;
+            document.querySelectorAll('.format-card').forEach(card => {
+                card.classList.toggle('selected', card.dataset.format === format);
+            });
+        }
+
+        // Coordinate parsing functions
+        function parseCoordinate(value, isLatitude) {
+            if (value === null || value === undefined || String(value).trim() === '') {
+                return { success: false, value: null, error: 'Empty value' };
+            }
+            
+            let str = String(value).trim();
+            
+            // Already a valid decimal number?
+            if (/^-?\d+\.?\d*$/.test(str)) {
+                const num = parseFloat(str);
+                if (isValidCoord(num, isLatitude)) {
+                    return { success: true, value: num };
+                }
+            }
+            
+            // Try parsing various formats
+            let result = null;
+            
+            // Check for direction indicator
+            let direction = null;
+            const dirMatch = str.match(/([NSEW])/i);
+            if (dirMatch) {
+                direction = dirMatch[1].toUpperCase();
+                str = str.replace(/[NSEW]/gi, '').trim();
+            }
+            
+            // Try DMS format: 8°29'5" or 8 29 5 or 8-29-5
+            const dmsMatch = str.match(/^(-?\d+)[°\s\-]+(\d+)['\s\-]+(\d+\.?\d*)["\s]*$/);
+            if (dmsMatch) {
+                const deg = parseFloat(dmsMatch[1]);
+                const min = parseFloat(dmsMatch[2]);
+                const sec = parseFloat(dmsMatch[3]);
+                result = deg + (min / 60) + (sec / 3600);
+            }
+            
+            // Try DDM format: 8°29.083' or 8 29.083
+            if (result === null) {
+                const ddmMatch = str.match(/^(-?\d+)[°\s\-]+(\d+\.?\d*)['\s]*$/);
+                if (ddmMatch) {
+                    const deg = parseFloat(ddmMatch[1]);
+                    const min = parseFloat(ddmMatch[2]);
+                    result = deg + (min / 60);
+                }
+            }
+            
+            // Try decimal with spaces: -13.228889 or 13.228889
+            if (result === null) {
+                const decMatch = str.match(/^(-?\d+\.?\d*)$/);
+                if (decMatch) {
+                    result = parseFloat(decMatch[1]);
+                }
+            }
+            
+            // Try formats like "8 29 5.5" (space separated DMS)
+            if (result === null) {
+                const parts = str.split(/[\s,]+/).filter(p => p);
+                if (parts.length === 3) {
+                    const deg = parseFloat(parts[0]);
+                    const min = parseFloat(parts[1]);
+                    const sec = parseFloat(parts[2]);
+                    if (!isNaN(deg) && !isNaN(min) && !isNaN(sec)) {
+                        result = Math.abs(deg) + (min / 60) + (sec / 3600);
+                        if (deg < 0) result = -result;
+                    }
+                } else if (parts.length === 2) {
+                    const deg = parseFloat(parts[0]);
+                    const min = parseFloat(parts[1]);
+                    if (!isNaN(deg) && !isNaN(min)) {
+                        result = Math.abs(deg) + (min / 60);
+                        if (deg < 0) result = -result;
+                    }
+                }
+            }
+            
+            if (result === null) {
+                return { success: false, value: null, error: 'Unable to parse format' };
+            }
+            
+            // Apply direction
+            if (direction) {
+                result = Math.abs(result);
+                if (direction === 'S' || direction === 'W') {
+                    result = -result;
+                }
+            }
+            
+            // Validate range
+            if (!isValidCoord(result, isLatitude)) {
+                return { success: false, value: null, error: `Out of range: ${result}` };
+            }
+            
+            return { success: true, value: Math.round(result * 1000000) / 1000000 }; // 6 decimal places
+        }
+
+        function isValidCoord(num, isLatitude) {
+            if (isNaN(num)) return false;
+            if (isLatitude) return num >= -90 && num <= 90;
+            return num >= -180 && num <= 180;
+        }
+
+        function convertCoordinates() {
+            latColIdx = parseInt(document.getElementById('latColumn').value);
+            lonColIdx = parseInt(document.getElementById('lonColumn').value);
+            
+            if (isNaN(latColIdx) || latColIdx < 0) {
+                showNotification('Please select a Latitude column', 'error');
+                return;
+            }
+            if (isNaN(lonColIdx) || lonColIdx < 0) {
+                showNotification('Please select a Longitude column', 'error');
+                return;
+            }
+            if (latColIdx === lonColIdx) {
+                showNotification('Latitude and Longitude must be different columns', 'error');
+                return;
+            }
+
+            const latOutputName = document.getElementById('latOutputName').value || 'Latitude_DD';
+            const lonOutputName = document.getElementById('lonOutputName').value || 'Longitude_DD';
+
+            // Build new headers
+            convertedHeaders = [...headers, latOutputName, lonOutputName];
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            convertedData = originalData.map((row, idx) => {
+                const newRow = [...row];
+                
+                const latResult = parseCoordinate(row[latColIdx], true);
+                const lonResult = parseCoordinate(row[lonColIdx], false);
+                
+                newRow.push(latResult.success ? latResult.value : '');
+                newRow.push(lonResult.success ? lonResult.value : '');
+                
+                if (latResult.success && lonResult.success) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+                
+                return newRow;
+            });
+
+            // Update stats
+            document.getElementById('statTotal').textContent = originalData.length;
+            document.getElementById('statConverted').textContent = successCount;
+            document.getElementById('statFailed').textContent = failCount;
+            document.getElementById('statRate').textContent = Math.round((successCount / originalData.length) * 100) + '%';
+            
+            document.getElementById('statFailedBox').className = failCount > 0 ? 'stat-box danger' : 'stat-box success';
+
+            // Show preview
+            showPreview();
+
+            document.getElementById('step3').classList.remove('hidden');
+            document.getElementById('step3').scrollIntoView({ behavior: 'smooth' });
+
+            showNotification(`Converted ${successCount} of ${originalData.length} coordinates`, successCount === originalData.length ? 'success' : 'info');
+        }
+
+        function showPreview() {
+            const latOutputIdx = convertedHeaders.length - 2;
+            const lonOutputIdx = convertedHeaders.length - 1;
+
+            let html = '<thead><tr>';
+            convertedHeaders.forEach((h, i) => {
+                const isNew = i >= headers.length;
+                html += `<th class="${isNew ? 'new-col' : ''}">${h}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            const previewRows = convertedData.slice(0, 50);
+            previewRows.forEach((row) => {
+                html += '<tr>';
+                row.forEach((cell, colIdx) => {
+                    let cellClass = '';
+                    
+                    if (colIdx === latOutputIdx || colIdx === lonOutputIdx) {
+                        cellClass = cell !== '' ? 'converted-cell' : 'error-cell';
+                    }
+                    
+                    const display = cell === '' && (colIdx === latOutputIdx || colIdx === lonOutputIdx) ? 'ERROR' : cell;
+                    html += `<td class="${cellClass}">${display}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            if (convertedData.length > 50) {
+                html += `<tr><td colspan="${convertedHeaders.length}" style="text-align:center;color:#666;font-style:italic;">... and ${convertedData.length - 50} more rows</td></tr>`;
+            }
+
+            html += '</tbody>';
+            document.getElementById('previewTable').innerHTML = html;
+        }
+
+        function downloadResult(format) {
+            if (convertedData.length === 0) {
+                showNotification('No data to download', 'error');
+                return;
+            }
+
+            const baseName = uploadedFileName.replace(/\.[^/.]+$/, '') + '_converted';
+
+            if (format === 'csv') {
+                let csv = convertedHeaders.map(h => `"${h}"`).join(',') + '\n';
+                convertedData.forEach(row => {
+                    csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',') + '\n';
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                downloadBlob(blob, baseName + '.csv');
+            } else {
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet([convertedHeaders, ...convertedData]);
+                XLSX.utils.book_append_sheet(wb, ws, 'Converted Data');
+                XLSX.writeFile(wb, baseName + '.xlsx');
+            }
+
+            showNotification(`Downloaded as ${format.toUpperCase()}`, 'success');
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            setTimeout(() => notification.className = 'notification', 4000);
+        }
+    </script>
+</body>
+</html>
